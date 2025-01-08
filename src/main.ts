@@ -7,9 +7,21 @@ import minimatch from "minimatch";
 
 const GITHUB_TOKEN: string = core.getInput("GITHUB_TOKEN");
 const OPENAI_API_KEY: string = core.getInput("OPENAI_API_KEY");
-const OPENAI_API_MODEL: string = "gpt-4-1106-preview";
+const OPENAI_API_MODEL: string = core.getInput("OPENAI_API_MODEL");
+const SYSTEM_MESSAGE: string = core.getInput("INSTRUCTIONS");
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
+
+const SUPPORTS_JSON_FORMAT = [
+  "gpt-4o",
+  "gpt-4-turbo-preview",
+  "gpt-4-turbo",
+  "gpt-3.5-turbo",
+  "gpt-4-0125-preview",
+  "gpt-4-1106-preview",
+  "gpt-3.5-turbo-0125",
+  "gpt-3.5-turbo-1106",
+];
 
 const openai = new OpenAI({
   apiKey: OPENAI_API_KEY,
@@ -79,13 +91,11 @@ async function analyzeCode(
 }
 
 function createPrompt(file: File, chunk: Chunk, prDetails: PRDetails): string {
-  return `Your task is to review pull requests. Instructions:
-- Provide the response in following JSON format:  {"reviews": [{"lineNumber":  <line_number>, "reviewComment": "<review comment>"}]}
-- Do not give positive comments or compliments.
-- Provide comments and suggestions ONLY if there is something to improve, otherwise "reviews" should be an empty array.
+  let RESPONSE_FORMAT: string = `Response Instructions:
+- Provide your response in the following JSON format: {"reviews": [{"lineNumber":  <line_number>, "reviewComment": "<review comment>"}]}
+- Provide comments and suggestions ONLY if there are errors, otherwise "reviews" should be an empty array.
 - Write the comment in GitHub Markdown format.
 - Use the given description only for the overall context and only comment the code.
-- IMPORTANT: NEVER suggest adding comments to the code.
 
 Review the following code diff in the file "${
     file.to
@@ -108,6 +118,7 @@ ${chunk.changes
   .join("\n")}
 \`\`\`
 `;
+  return SYSTEM_MESSAGE.concat(RESPONSE_FORMAT);
 }
 
 async function getAIResponse(prompt: string): Promise<Array<{
@@ -122,12 +133,12 @@ async function getAIResponse(prompt: string): Promise<Array<{
     frequency_penalty: 0,
     presence_penalty: 0,
   };
-
+  console.log("Awaiting response....");
   try {
     const response = await openai.chat.completions.create({
       ...queryConfig,
       // return JSON if the model supports it:
-      ...(OPENAI_API_MODEL === "gpt-4-1106-preview"
+      ...(SUPPORTS_JSON_FORMAT.includes(OPENAI_API_MODEL)
         ? { response_format: { type: "json_object" } }
         : {}),
       messages: [
@@ -139,9 +150,10 @@ async function getAIResponse(prompt: string): Promise<Array<{
     });
 
     const res = response.choices[0].message?.content?.trim() || "{}";
+    console.error("Response:", res);
     return JSON.parse(res).reviews;
   } catch (error) {
-    console.error("Error:", error);
+    console.error("ERROR:", error);
     return null;
   }
 }
@@ -184,6 +196,7 @@ async function createReviewComment(
 async function main() {
   const prDetails = await getPRDetails();
   let diff: string | null;
+  console.log("EVENT PATH: ", process.env.GITHUB_EVENT_PATH ?? "", "utf8");
   const eventData = JSON.parse(
     readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8")
   );
@@ -244,6 +257,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("Error:", error);
+  console.error("MAIN ERROR:", error);
   process.exit(1);
 });
