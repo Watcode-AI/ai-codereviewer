@@ -140,10 +140,10 @@ async function getAIResponse(prompt: string): Promise<Array<{
     });
 
     const res = response.choices[0].message?.content?.trim() || "{}";
-    console.error(res);
+    console.error("Response:", res);
     return JSON.parse(res).reviews;
   } catch (error) {
-    console.error("Error:", error);
+    console.error("ERROR:", error);
     return null;
   }
 }
