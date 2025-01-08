@@ -81,7 +81,7 @@ async function analyzeCode(
 
 function createPrompt(file: File, chunk: Chunk, prDetails: PRDetails): string {
   let RESPONSE_FORMAT: string = `Response Instructions:
-- Provide your response in the JSON format provided to you.
+- Provide your response in the following JSON format: {"reviews": [{"lineNumber":  <line_number>, "reviewComment": "<review comment>"}]}
 - Provide comments and suggestions ONLY if there are errors, otherwise "reviews" should be an empty array.
 - Write the comment in GitHub Markdown format.
 - Use the given description only for the overall context and only comment the code.
@@ -129,31 +129,7 @@ async function getAIResponse(prompt: string): Promise<Array<{
       // return JSON if the model supports it:
       // {"reviews": [{"lineNumber":  <line_number>, "reviewComment": "<review comment>"}]}
       ...(OPENAI_API_MODEL !== "gpt-3.5-turbo"
-        ? {
-            response_format: {
-              type: "json_schema",
-              json_schema: {
-                name: "reviews",
-                schema: {
-                  type: "object",
-                  properties: {
-                    reviews: {
-                      type: "array",
-                      items: {
-                          "type": "object",
-                          "properties": {
-                              "lineNumber": {"type": "integer"},
-                              "reviewComment": {"type": "string"}
-                          },
-                          "required": ["lineNumber", "reviewComment"],
-                          "additionalProperties": false
-                      }
-                    }
-                  }
-                }
-              }
-            } 
-          }
+        ? { response_format: "json_object" }
         : {}),
       messages: [
         {
@@ -163,7 +139,7 @@ async function getAIResponse(prompt: string): Promise<Array<{
       ],
     });
 
-    const res = response.choices[0].message?.content?.trim().replace(/```json\n?/g, '').replace(/```\n?/g, '') || "{}";
+    const res = response.choices[0].message?.content?.trim() || "{}";
     console.log(res);
     return JSON.parse(res).reviews;
   } catch (error) {
