@@ -78,6 +78,17 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
     const GITHUB_TOKEN = core.getInput("GITHUB_TOKEN");
     const OPENAI_API_KEY = core.getInput("OPENAI_API_KEY");
     const OPENAI_API_MODEL = core.getInput("OPENAI_API_MODEL");
+    const SYSTEM_MESSAGE = core.getInput("INSTRUCTIONS");
+    const SUPPORTS_JSON_FORMAT = [
+        "gpt-4o",
+        "gpt-4-turbo-preview",
+        "gpt-4-turbo",
+        "gpt-3.5-turbo",
+        "gpt-4-0125-preview",
+        "gpt-4-1106-preview",
+        "gpt-3.5-turbo-0125",
+        "gpt-3.5-turbo-1106",
+    ];
     const octokit = new rest_1.Octokit({ auth: GITHUB_TOKEN });
     const openai = new openai_1.default({
         apiKey: OPENAI_API_KEY,
