@@ -12,6 +12,17 @@ const SYSTEM_MESSAGE: string = core.getInput("INSTRUCTIONS");
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
+const SUPPORTS_JSON_FORMAT = [
+  "gpt-4o",
+  "gpt-4-turbo-preview",
+  "gpt-4-turbo",
+  "gpt-3.5-turbo",
+  "gpt-4-0125-preview",
+  "gpt-4-1106-preview",
+  "gpt-3.5-turbo-0125",
+  "gpt-3.5-turbo-1106",
+];
+
 const openai = new OpenAI({
   apiKey: OPENAI_API_KEY,
 });
@@ -127,9 +138,8 @@ async function getAIResponse(prompt: string): Promise<Array<{
     const response = await openai.chat.completions.create({
       ...queryConfig,
       // return JSON if the model supports it:
-      // {"reviews": [{"lineNumber":  <line_number>, "reviewComment": "<review comment>"}]}
-      ...(OPENAI_API_MODEL !== "gpt-3.5-turbo"
-        ? { response_format: "json_object" }
+      ...(SUPPORTS_JSON_FORMAT.includes(OPENAI_API_MODEL)
+        ? { response_format: { type: "json_object" } }
         : {}),
       messages: [
         {
