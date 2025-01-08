@@ -146,7 +146,7 @@ async function getAIResponse(prompt: string): Promise<Array<{
                               "reviewComment": {"type": "string"}
                           },
                           "required": ["lineNumber", "reviewComment"],
-                          "additionalProperties": False
+                          "additionalProperties": false
                       }
                     }
                   }
