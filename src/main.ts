@@ -186,6 +186,7 @@ async function createReviewComment(
 async function main() {
   const prDetails = await getPRDetails();
   let diff: string | null;
+  console.log("EVENT PATH: ", process.env.GITHUB_EVENT_PATH ?? "", "utf8");
   const eventData = JSON.parse(
     readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8")
   );
@@ -246,6 +247,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("Error:", error);
+  console.error("MAIN ERROR:", error);
   process.exit(1);
 });
