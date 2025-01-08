@@ -127,8 +127,33 @@ async function getAIResponse(prompt: string): Promise<Array<{
     const response = await openai.chat.completions.create({
       ...queryConfig,
       // return JSON if the model supports it:
+      // {"reviews": [{"lineNumber":  <line_number>, "reviewComment": "<review comment>"}]}
       ...(OPENAI_API_MODEL !== "gpt-3.5-turbo"
-        ? { response_format: { type: "json_object" } }
+        ? {
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "reviews",
+                schema: {
+                  type: "object",
+                  properties: {
+                    reviews: {
+                      type: "array",
+                      items: {
+                          "type": "object",
+                          "properties": {
+                              "lineNumber": {"type": "integer"},
+                              "reviewComment": {"type": "string"}
+                          },
+                          "required": ["lineNumber", "reviewComment"],
+                          "additionalProperties": False
+                      }
+                    }
+                  }
+                }
+              }
+            } 
+          }
         : {}),
       messages: [
         {
