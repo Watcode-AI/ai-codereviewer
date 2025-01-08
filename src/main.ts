@@ -8,6 +8,7 @@ import minimatch from "minimatch";
 const GITHUB_TOKEN: string = core.getInput("GITHUB_TOKEN");
 const OPENAI_API_KEY: string = core.getInput("OPENAI_API_KEY");
 const OPENAI_API_MODEL: string = core.getInput("OPENAI_API_MODEL");
+const SYSTEM_MESSAGE: string = core.getInput("INSTRUCTIONS");
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
@@ -79,7 +80,7 @@ async function analyzeCode(
 }
 
 function createPrompt(file: File, chunk: Chunk, prDetails: PRDetails): string {
-  return `Your task is to review pull requests. Instructions:
+  let RESPONSE_FORMAT: string = `Instructions:
 - Provide the response in following JSON format:  {"reviews": [{"lineNumber":  <line_number>, "reviewComment": "<review comment>"}]}
 - Do not give positive comments or compliments.
 - Provide comments and suggestions ONLY if there is something to improve, otherwise "reviews" should be an empty array.
@@ -108,6 +109,7 @@ ${chunk.changes
   .join("\n")}
 \`\`\`
 `;
+  return SYSTEM_MESSAGE.concat(RESPONSE_FORMAT);
 }
 
 async function getAIResponse(prompt: string): Promise<Array<{
