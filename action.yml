@@ -10,7 +10,10 @@ inputs:
   OPENAI_API_MODEL:
     description: "OpenAI API model."
     required: false
-    default: "gpt-4"
+    default: "gpt-4o"
+  INSTRUCTIONS:
+    description: "Custom instructions for detecting errors."
+    required: true
   exclude:
     description: "Glob patterns to exclude files from the diff analysis"
     required: false
