@@ -122,7 +122,7 @@ async function getAIResponse(prompt: string): Promise<Array<{
     frequency_penalty: 0,
     presence_penalty: 0,
   };
-
+  console.log("Awaiting response....");
   try {
     const response = await openai.chat.completions.create({
       ...queryConfig,
@@ -164,6 +164,7 @@ async function getAIResponse(prompt: string): Promise<Array<{
     });
 
     const res = response.choices[0].message?.content?.trim().replace(/```json\n?/g, '').replace(/```\n?/g, '') || "{}";
+    console.log(res);
     return JSON.parse(res).reviews;
   } catch (error) {
     console.error("Error:", error);
