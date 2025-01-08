@@ -149,9 +149,15 @@ async function getAIResponse(prompt: string): Promise<Array<{
       ],
     });
 
-    const res = response.choices[0].message?.content?.trim() || "{}";
-    console.error("Response:", res);
-    return JSON.parse(res).reviews;
+    const rawContent = response.choices[0].message?.content || "";
+    const sanitizedContent = rawContent
+      .replace(/```json\s*/g, "") // Remove opening ```json markers
+      .replace(/```/g, ""); // Remove closing ``` markers
+
+    // Attempt to parse the sanitized content
+    const parsed = JSON.parse(sanitizedContent);
+    return parsed.reviews;
+    
   } catch (error) {
     console.error("ERROR:", error);
     return null;
